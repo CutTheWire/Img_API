@@ -1,0 +1,12 @@
+services:
+  fastapi:
+    restart: always
+    build:
+      context: ./fastapi
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+    volumes:
+      - ./fastapi/src:/app
+      - ./certificates:/certificates
+    command: ["python", "main.py"]

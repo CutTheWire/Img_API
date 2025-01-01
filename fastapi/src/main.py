@@ -87,7 +87,8 @@ app.openapi = custom_openapi
 
 @app.middleware("http")
 async def ip_restrict_and_bot_blocking_middleware(request: Request, call_next):
-    bot_user_agents = load_bot_list("fastapi/src/bot.yaml")
+    bot_file_path = os.path.join(os.getcwd(), "bot.yaml")
+    bot_user_agents = load_bot_list(bot_file_path)
     user_agent = request.headers.get("User-Agent", "").lower()
 
     try:

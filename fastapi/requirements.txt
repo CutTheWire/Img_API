@@ -3,3 +3,4 @@ pydantic
 uvicorn
 PyYAML
 starlette
+python-dotenv

@@ -7,7 +7,7 @@ from typing import List
 from dotenv import load_dotenv
 from mimetypes import guess_type
 
-from fastapi import (FastAPI, HTTPException, Request, Depends)
+from fastapi import (FastAPI, APIRouter, HTTPException, UploadFile, File ,Request, Depends)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
@@ -23,6 +23,7 @@ load_dotenv() # .env 파일 로드
 SSL_PW = os.getenv("SSL_PW")  # 환경변수에서 API 키 가져오기
 key_pem = os.getenv("KEY_PEM")  # 환경변수에서 PEM 키 가져오기
 crt_pem = os.getenv("CRT_PEM")  # 환경변수에서 PEM 키 가져오기
+img_set = ("png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp", "svg", "ico")
 
 def load_bot_list(file_path: str) -> list:
     '''
@@ -122,7 +123,9 @@ async def favicon():
     favicon_path = os.path.join(static_dir, "favicon.ico")
     return FileResponse(favicon_path)
 
-@app.get("/folders", response_model=base_models.FolderResponse)
+Directory_Router = APIRouter() # Directory 관련 라우터 정의
+
+@Directory_Router.get("/folders", response_model=base_models.FolderResponse)
 async def get_folders():
     """
     static 폴더 내부의 하위 디렉토리 리스트 반환
@@ -136,7 +139,7 @@ async def get_folders():
     except Exception as e:
         raise HTTPException(status_code=500, detail="디렉토리 리스트를 가져오는 중 오류가 발생했습니다.")
 
-@app.post("/folders/images", response_model=base_models.ImageListResponse)
+@Directory_Router.post("/folders/images", response_model=base_models.ImageListResponse)
 async def get_images_in_folder(request: base_models.FolderRequest):
     """
     지정된 폴더 내 이미지 파일 리스트 반환
@@ -149,11 +152,59 @@ async def get_images_in_folder(request: base_models.FolderRequest):
     try:
         images = [
             file for file in os.listdir(folder_path)
-            if os.path.isfile(os.path.join(folder_path, file)) and file.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))
+            if os.path.isfile(os.path.join(folder_path, file)) and file.lower().endswith(img_set)
         ]
         return base_models.ImageListResponse(images=images)
     except Exception as e:
         raise HTTPException(status_code=500, detail="이미지 리스트를 가져오는 중 오류가 발생했습니다.")
+
+@Directory_Router.post("/create_folde", status_code=201)
+async def create_folder(request: base_models.FolderRequest):
+    """
+    새로운 폴더를 생성
+    """
+    folder_path = os.path.join(static_dir, request.folder)
+
+    if os.path.exists(folder_path):
+        raise HTTPException(status_code=400, detail="이미 폴더가 존재합니다.")
+
+    try:
+        os.makedirs(folder_path)
+        return {"message": f"'{request.folder}' 폴더가 성공적으로 생성되었습니다."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="폴더를 생성하는 중 오류가 발생했습니다.")
+
+@Directory_Router.post("/folders/{folder}/upload", status_code=201)
+async def upload_image_to_folder(
+    folder: str,  # 경로 변수로 폴더 이름 받기
+    file: UploadFile = File(...)
+):
+    """
+    특정 폴더에 이미지 업로드
+    """
+    folder_path = os.path.join(static_dir, folder)  # 경로 변수 사용
+
+    if not os.path.exists(folder_path):
+        raise HTTPException(status_code=404, detail="지정된 폴더를 찾을 수 없습니다.")
+
+    if not file.filename.lower().endswith(img_set):
+        raise HTTPException(status_code=400, detail="이미지 파일만 업로드할 수 있습니다.")
+
+    try:
+        file_path = os.path.join(folder_path, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        return {"message": f"이미지가 '{folder}' 폴더에 성공적으로 업로드되었습니다.", "file_name": file.filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="이미지를 업로드하는 중 오류가 발생했습니다.")
+
+
+app.include_router(
+    Directory_Router,
+    prefix="/directory",
+    tags=["Directory Router"],
+    responses={500: {"description": "Internal Server Error"}}
+)
 
 @app.get("/{folder}/{filename}")
 async def get_image(request: Request, image_request: base_models.ImageRequest = Depends()):

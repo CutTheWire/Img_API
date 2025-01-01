@@ -3,16 +3,20 @@ from typing import List
 from fastapi.responses import FileResponse
 from . import Error_handlers as error_handlers
 
-# @app.get("/folders")
 class FolderResponse(BaseModel):
+    '''
+    folders: List[str]
+    '''
     folders: List[str] = Field(
         title="폴더 리스트",
         description="static 폴더 내의 하위 디렉토리 리스트",
         examples=[["images", "docs"]]
     )
 
-# @app.post("/folders/images")
 class FolderRequest(BaseModel):
+    '''
+    folder: str
+    '''
     folder: str = Field(
         title="폴더 이름",
         description="정적 파일이 포함된 폴더의 이름",
@@ -26,7 +30,6 @@ class ImageListResponse(BaseModel):
         examples=[["example.png", "sample.jpg"]]
     )
 
-# @app.get("/{folder}/{filename}")
 class ImageRequest(BaseModel):
     folder: str = Field(
         title="폴더 이름",

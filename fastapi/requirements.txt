@@ -4,3 +4,4 @@ uvicorn
 PyYAML
 starlette
 python-dotenv
+python-multipart

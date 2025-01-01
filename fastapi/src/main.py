@@ -186,18 +186,25 @@ async def get_image(request: Request, image_request: base_models.ImageRequest = 
         ))
 
 if __name__ == "__main__":
-    certificates_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "certificates")
-    )
-    ssl_keyfile = os.path.join(certificates_dir, key_pem)
-    ssl_certfile = os.path.join(certificates_dir, crt_pem)
-
+    # certificates_dir = os.path.abspath(
+    #     os.path.join(os.path.dirname(__file__), "..", "..", "certificates")
+    # )
+    # ssl_keyfile = os.path.join(certificates_dir, key_pem)
+    # ssl_certfile = os.path.join(certificates_dir, crt_pem)
+    #
+    # config = uvicorn.Config(
+    #     app,
+    #     host="0.0.0.0",
+    #     port=442,  # HTTPS 기본 포트
+    #     ssl_keyfile=ssl_keyfile,
+    #     ssl_certfile=ssl_certfile,
+    #     loop="asyncio",
+    #     http="h11"
+    # )
     config = uvicorn.Config(
         app,
         host="0.0.0.0",
-        port=443,  # HTTPS 기본 포트
-        ssl_keyfile=ssl_keyfile,
-        ssl_certfile=ssl_certfile,
+        port=8000,  # FastAPI는 HTTP로 실행
         loop="asyncio",
         http="h11"
     )

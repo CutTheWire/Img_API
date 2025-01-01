@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   fastapi:
     restart: always
@@ -5,8 +7,18 @@ services:
       context: ./fastapi
       dockerfile: Dockerfile
     ports:
-      - "443:443"
+      - "8000:8000"
     volumes:
       - ./fastapi/src:/app
-      - ./certificates:/certificates
     command: ["python", "main.py"]
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "443:443"
+    volumes:
+      - ./certificates:/etc/nginx/certs
+    depends_on:
+      - fastapi

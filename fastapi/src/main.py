@@ -6,9 +6,8 @@ import platform
 from typing import List
 from dotenv import load_dotenv
 from mimetypes import guess_type
-from pydantic import ValidationError
 
-from fastapi import (FastAPI, HTTPException, Request, Response)
+from fastapi import (FastAPI, HTTPException, Request, Depends)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
@@ -122,7 +121,7 @@ async def favicon():
     favicon_path = os.path.join(static_dir, "favicon.ico")
     return FileResponse(favicon_path)
 
-@app.get("/folders", response_model=List[str])
+@app.get("/folders", response_model=base_models.FolderResponse)
 async def get_folders():
     """
     static 폴더 내부의 하위 디렉토리 리스트 반환
@@ -132,16 +131,16 @@ async def get_folders():
             folder for folder in os.listdir(static_dir)
             if os.path.isdir(os.path.join(static_dir, folder))
         ]
-        return folders
+        return base_models.FolderResponse(folders=folders)
     except Exception as e:
         raise HTTPException(status_code=500, detail="디렉토리 리스트를 가져오는 중 오류가 발생했습니다.")
 
-@app.get("/folders/{folder}/images", response_model=List[str])
-async def get_images_in_folder(folder: str):
+@app.post("/folders/images", response_model=base_models.ImageListResponse)
+async def get_images_in_folder(request: base_models.FolderRequest):
     """
     지정된 폴더 내 이미지 파일 리스트 반환
     """
-    folder_path = os.path.join(static_dir, folder)
+    folder_path = os.path.join(static_dir, request.folder)
 
     if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
         raise HTTPException(status_code=404, detail="지정된 폴더를 찾을 수 없습니다.")
@@ -151,17 +150,17 @@ async def get_images_in_folder(folder: str):
             file for file in os.listdir(folder_path)
             if os.path.isfile(os.path.join(folder_path, file)) and file.lower().endswith((".png", ".jpg", ".jpeg", ".gif"))
         ]
-        return images
+        return base_models.ImageListResponse(images=images)
     except Exception as e:
         raise HTTPException(status_code=500, detail="이미지 리스트를 가져오는 중 오류가 발생했습니다.")
 
 @app.get("/{folder}/{filename}")
-async def get_image(folder: str, filename: str):
+async def get_image(request: Request, image_request: base_models.ImageRequest = Depends()):
     """
     지정된 폴더의 이미지를 반환하여 웹페이지 및 마크다운에서 표시
     """
     try:
-        file_path = os.path.join(static_dir, folder, filename)
+        file_path = os.path.join(static_dir, image_request.folder, image_request.filename)
 
         # 파일 존재 여부 확인
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
@@ -169,21 +168,20 @@ async def get_image(folder: str, filename: str):
 
         # MIME 타입 확인
         mime_type, _ = guess_type(file_path)
-        
-        return FileResponse(
-            file_path,
+        return base_models.ImageResponse(
+            path=file_path,
             media_type=mime_type or "application/octet-stream",
             headers={"Content-Disposition": "inline"}
         )
 
     except HTTPException as http_exc:
-        return await error_handlers.generic_exception_handler(Request, http_exc)
+        return await error_handlers.generic_exception_handler(request, http_exc)
 
     except Exception as exc:
         # 기타 예외 처리
-        return await error_handlers.generic_exception_handler(Request, HTTPException(
+        return await error_handlers.generic_exception_handler(request, HTTPException(
             status_code=500,
-            detail="An unexpected error occurred while retrieving the file."
+            detail="파일을 가져오는 중 예상치 못한 오류가 발생했습니다."
         ))
 
 if __name__ == "__main__":

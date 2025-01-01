@@ -18,15 +18,15 @@
     ```
 4. noip DNS 설정
    
-   - [noip DNS 설명](.\certificates\DNS_README.md)
+   - [noip DNS 설명](certificates/DNS_README.md)
    
 5. wacs.exe로 PEM 설정.
 
-   - [wacs 설명](.\certificates\PEM_README.md)
+   - [wacs 설명](certificates/PEM_README.md)
 
 ## 이미지 관련 참고 문서서
 
-- [Static 폴더 사용 방법](./fastapi/src/static/IMG_README.md)
+- [Static 폴더 사용 방법](fastapi/src/static/IMG_README.md)
 
 
 ## 사용법

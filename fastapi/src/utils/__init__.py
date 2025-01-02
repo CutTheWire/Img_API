@@ -11,6 +11,8 @@ __all__ 리스트를 통해 외부에서 접근 가능한 모듈들을 정의합
 __unused__ 리스트를 통해 사용되지 않는 모듈들을 정의합니다.
 '''
 
+__version__='1.0.0'
+
 # Used modules
 from . import BaseModels as base_models
 from . import Error_handlers as error_handlers

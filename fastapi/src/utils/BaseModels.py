@@ -1,3 +1,8 @@
+# BaseModels.py
+'''
+파일은 FastAPI 모델 정의 및 유효성 검사를 위한 클래스 정의
+'''
+
 from pydantic import BaseModel, Field, field_validator
 from typing import List
 from fastapi.responses import FileResponse
@@ -5,7 +10,10 @@ from . import Error_handlers as error_handlers
 
 class FolderResponse(BaseModel):
     '''
-    folders: List[str]
+    폴더 응답 모델
+
+    속성:
+        folders (List[str]): static 폴더 내의 하위 디렉토리 리스트
     '''
     folders: List[str] = Field(
         title="폴더 리스트",
@@ -15,7 +23,10 @@ class FolderResponse(BaseModel):
 
 class FolderRequest(BaseModel):
     '''
-    folder: str
+    폴더 요청 모델
+
+    속성:
+        folder (str): 정적 파일이 포함된 폴더의 이름
     '''
     folder: str = Field(
         title="폴더 이름",
@@ -24,6 +35,12 @@ class FolderRequest(BaseModel):
     )
 
 class ImageListResponse(BaseModel):
+    '''
+    이미지 리스트 응답 모델
+
+    속성:
+        images (List[str]): 지정된 폴더 내 이미지 파일들의 리스트
+    '''
     images: List[str] = Field(
         title="이미지 파일 리스트",
         description="지정된 폴더 내 이미지 파일들의 리스트",
@@ -31,6 +48,17 @@ class ImageListResponse(BaseModel):
     )
 
 class ImageRequest(BaseModel):
+    '''
+    이미지 요청 모델
+
+    속성:
+        folder (str): 정적 파일이 포함된 폴더의 이름
+        filename (str): 요청된 파일의 이름
+
+    메서드:
+        validate_file_extension(cls, value): 파일 확장자를 검증합니다.
+        validate_folder(cls, value): 폴더 이름을 검증합니다.
+    '''
     folder: str = Field(
         title="폴더 이름",
         description="정적 파일이 포함된 폴더의 이름",
@@ -58,5 +86,11 @@ class ImageRequest(BaseModel):
         return value
     
 class ImageResponse(FileResponse):
+    '''
+    이미지 응답 모델
+
+    초기화 메서드:
+        __init__(self, path: str, *args, **kwargs): 파일 경로를 받아 FileResponse를 초기화합니다.
+    '''
     def __init__(self, path: str, *args, **kwargs):
         super().__init__(path, *args, **kwargs)

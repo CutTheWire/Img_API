@@ -1,49 +1,69 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List
+from fastapi import (UploadFile, File)
 from fastapi.responses import FileResponse
 from . import Error_handlers as error_handlers
 
+filename= Field(
+    title="파일 이름",
+    description="요청된 파일의 이름",
+    examples=["example.png"]
+)
+
+folder = Field(
+    title="폴더 이름",
+    description="정적 파일이 포함된 폴더의 이름",
+    examples=["images"]
+)
+
+folders = Field(
+    title="폴더 리스트",
+    description="static 폴더 내의 하위 디렉토리 리스트",
+    examples=[["images", "docs"]]
+)
+
+images = Field(
+    title="이미지 파일 리스트",
+    description="지정된 폴더 내 이미지 파일들의 리스트",
+    examples=[["example.png", "sample.jpg"]]
+)
+
 class FolderResponse(BaseModel):
     '''
-    folders: List[str]
+    폴더 응답 모델
+    folders: 폴더 이름들의 리스트
     '''
-    folders: List[str] = Field(
-        title="폴더 리스트",
-        description="static 폴더 내의 하위 디렉토리 리스트",
-        examples=[["images", "docs"]]
-    )
+    folders: List[str] = folders
 
 class FolderRequest(BaseModel):
     '''
-    folder: str
+    폴더 요청 모델
+    folder: 폴더 이름
     '''
-    folder: str = Field(
-        title="폴더 이름",
-        description="정적 파일이 포함된 폴더의 이름",
-        examples=["images"]
-    )
+    folder: str = folder
 
 class ImageListResponse(BaseModel):
-    images: List[str] = Field(
-        title="이미지 파일 리스트",
-        description="지정된 폴더 내 이미지 파일들의 리스트",
-        examples=[["example.png", "sample.jpg"]]
-    )
+    '''
+    이미지 리스트 응답 모델
+    images: 이미지 파일 이름들의 리스트
+    '''
+    images: List[str] = images
+    
 
 class ImageRequest(BaseModel):
-    folder: str = Field(
-        title="폴더 이름",
-        description="정적 파일이 포함된 폴더의 이름",
-        examples=["images"]
-    )
-    filename: str = Field(
-        title="파일 이름",
-        description="요청된 파일의 이름",
-        examples=["example.png"]
-    )
+    '''
+    이미지 요청 모델
+    folder: 폴더 이름
+    filename: 파일 이름
+    '''
+    folder: str = folder
+    filename: str = filename
 
     @field_validator('filename', mode='before')
     def validate_file_extension(cls, value):
+        '''
+        파일 확장자 유효성 검사기
+        '''
         allowed_extensions = {"png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp", "svg", "ico"}
         if "." not in value or value.split(".")[-1].lower() not in allowed_extensions:
             raise error_handlers.ValueErrorException(
